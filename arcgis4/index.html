@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+
+<html lang="lt">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>Vietovardžių paieška</title>
+		<link rel="stylesheet" href="https://js.arcgis.com/4.13/esri/themes/light/main.css">
+		<script src="https://js.arcgis.com/4.13/"></script>
+		<link rel="stylesheet" href="../main.css" type="text/css">
+		<script src="../api.js"></script>
+		<script src="../sidebar.js"></script>
+		<script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script> <!-- Aktualu IE... !-->
+	</head>
+	<body>
+		<div id="root">
+			<div id="sidebar"></div>
+			<div id="map"></div>
+		</div>
+		<script type="text/javascript">
+			var map, mapView, graphicsLayer;
+			require([
+				"esri/Map",
+				"esri/views/MapView",
+				"esri/layers/OpenStreetMapLayer",
+				"esri/layers/GraphicsLayer",
+				"esri/geometry/projection" // Preload'inimas...
+			], function(Map, MapView, OpenStreetMapLayer, GraphicsLayer) {
+				map = new Map();
+				map.add(new OpenStreetMapLayer());
+				mapView = new MapView({
+					container: "map",
+					map: map,
+					center: [24.05134, 55.20544],
+					zoom: 8
+				});
+				graphicsLayer = new GraphicsLayer();
+				map.add(graphicsLayer);
+			});
+			function clearMap() {
+				graphicsLayer.removeAll();
+			}
+			function showItemOnMap(item, e) {
+				clearMap();
+				require([
+					"esri/geometry/SpatialReference",
+					"esri/geometry/Point",
+					"esri/geometry/Polyline",
+					"esri/geometry/Polygon",
+					"esri/Graphic",
+					"esri/geometry/projection"
+				], function(SpatialReference, Point, Polyline, Polygon, Graphic, Projection) {
+					var spatialReference = new SpatialReference({wkid: 3346}),
+						geometry;
+					switch (item._source.geometryType) {
+						case "LineString":
+							geometry = new Polyline(spatialReference);
+							geometry.addPath(item.geom);
+							break;
+						case "MultiLineString":
+							geometry = new Polyline(spatialReference);
+							for (var i = 0; i < item.geom.length; i++) {
+								geometry.addPath(item.geom[i]);
+							}
+							break;
+						case "Point":
+							geometry = new Point(item.geom[0], spatialReference);
+							break;
+						case "Polygon":
+							geometry = new Polygon(spatialReference);
+							for (var i = 0; i < item.geom.length; i++) {
+								geometry.addRing(item.geom[i]);
+							}
+							break;
+						case "MultiPolygon":
+							// ...
+							break;
+						default:
+							console.log("ELSE...", item.geom, item._source.geometryType);
+					}
+					if (geometry) {
+						var graphic = new Graphic(geometry);
+						graphicsLayer.add(graphic);
+						Projection.load().then(function(){
+							var projectedGeometry = Projection.project(graphic.geometry, mapView.spatialReference);
+							mapView.goTo({
+								target: projectedGeometry
+							});
+						});
+					} else {
+						alert("Neidentifikuota geometrija...");
+					}
+				});
+			}
+		</script>
+	</body>
+</html>

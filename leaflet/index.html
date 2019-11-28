@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+
+<html lang="lt">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>Vietovardžių paieška</title>
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+		<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+		<link rel="stylesheet" href="../main.css" type="text/css">
+		<script src="../api.js"></script>
+		<script src="../sidebar.js"></script>
+		<script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script> <!-- Aktualu IE... !-->
+		<script src="https://cdn.jsdelivr.net/npm/proj4@2.6.0/dist/proj4-src.min.js"></script>
+	</head>
+	<body>
+		<div id="root">
+			<div id="sidebar"></div>
+			<div id="map"></div>
+		</div>
+		<script type="text/javascript">
+			var map = L.map("map").setView([55.20544, 24.05134], 8),
+				graphicsLayer = L.layerGroup();
+			L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+			graphicsLayer.addTo(map);
+			proj4.defs("EPSG:3346", "+proj=tmerc +lat_0=0 +lon_0=24 +k=0.9998 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+			function reprojectGeometry(geometry, arr) {
+				geometry.forEach(function(coordPair){
+					if (Array.isArray(coordPair) && coordPair.length && Array.isArray(coordPair[0])) {
+						arr.push(reprojectGeometry(coordPair, []));
+					} else {
+						arr.push(proj4("EPSG:3346", "EPSG:4326", coordPair).reverse());
+					}
+				});
+				return arr;
+			}
+			function clearMap() {
+				graphicsLayer.eachLayer(function(layer){
+					graphicsLayer.removeLayer(layer);
+				});
+			}
+			function showItemOnMap(item, e) {
+				clearMap();
+				var geom = reprojectGeometry(item.geom, []),
+					feature;
+				switch (item._source.geometryType) {
+					case "LineString":
+					case "MultiLineString":
+						feature = L.polyline(geom, {color: "red"});
+						break;
+					case "Point":
+						feature = L.circle(geom[0], {color: "red"});
+						break;
+					case "Polygon":
+					case "MultiPolygon":
+						feature = L.polygon(geom, {color: "red"});
+						break;
+					default:
+						console.log("ELSE...", item.geom, item._source.geometryType);
+				}
+				if (feature) {
+					graphicsLayer.addLayer(feature);
+					map.fitBounds(feature.getBounds());
+				} else {
+					alert("Neidentifikuota geometrija...");
+				}
+			}
+		</script>
+	</body>
+</html>

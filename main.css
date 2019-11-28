@@ -1,0 +1,61 @@
+﻿html, body {
+	height: 100%;
+}
+
+body {
+	margin: 0;
+}
+
+#root {
+	height: 100%;
+	width: 100%;
+}
+
+#sidebar {
+	height: 100%;
+	width: 20%;
+	float: left;
+	border-right: 1px solid #cccccc;
+	box-sizing: border-box;
+	overflow: auto;
+	padding: 10px;
+}
+
+#map {
+	height: 100%;
+	width: 80%;
+	float: left;
+}
+
+#search-controls input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+#search-controls button {
+	margin-top: 3px;
+	margin-right: 3px;
+}
+
+#results-list {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	margin-top: 20px;
+	font-size: 13px;
+}
+
+#results-list li {
+	border: 1px solid #cccccc;
+	border-bottom: none;
+	padding: 4px;
+	cursor: pointer;
+}
+
+#results-list li:hover {
+	background-color: #eeeeee;
+}
+
+#results-list li:last-child {
+	border-bottom: 1px solid #cccccc;
+}
